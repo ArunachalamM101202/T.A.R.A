@@ -52,23 +52,12 @@ def handle_chat_input():
                         
                         if result["success"]:
                             # Display the analysis results
-                            st.write(result["output"])
-                            
-                            # Add to chat history
-                            st.session_state.chat_history.append({
-                                "role": "assistant", 
-                                "content": result["output"]
-                            })
+                            response_content = result["output"]
+                            st.write(response_content)
                         else:
                             # Display the error
                             st.error(f"Analysis failed: {result['error']}")
-                            
-                            # Add error to chat history
-                            error_message = f"I encountered an issue while analyzing the data: {result['error']}"
-                            st.session_state.chat_history.append({
-                                "role": "assistant", 
-                                "content": error_message
-                            })
+                            response_content = f"I encountered an issue while analyzing the data: {result['error']}"
                 else:
                     # Select instruction prompt based on user role
                     if st.session_state.user_role == "student":
@@ -79,14 +68,21 @@ def handle_chat_input():
                     # Use standard RAG approach for non-analysis queries
                     enhanced_question = f"{instruction_prompt}\n\nUser question: {user_question}"
                     response = st.session_state.conversation({"question": enhanced_question})
-                    answer = response["answer"]
-                    st.write(answer)
-                    
-                    # Add to chat history
-                    st.session_state.chat_history.append({
-                        "role": "assistant", 
-                        "content": answer
-                    })
+                    response_content = response["answer"]
+                    st.write(response_content)
+                
+                # Add to chat history
+                st.session_state.chat_history.append({
+                    "role": "assistant", 
+                    "content": response_content
+                })
+                
+                # Generate and play voice if enabled
+                if st.session_state.voice_processor.is_available and st.session_state.get("voice_enabled", False):
+                    with st.spinner("Generating voice..."):
+                        audio_stream = st.session_state.voice_processor.text_to_speech(response_content)
+                        if audio_stream:
+                            st.audio(audio_stream, format="audio/mp3")
 
 def should_generate_analysis_code(query):
     """

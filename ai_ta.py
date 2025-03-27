@@ -2,7 +2,10 @@ import streamlit as st
 from modules.pdf_processor import process_pdf
 from modules.chat_handler import handle_chat_input
 from modules.document_processor import process_document
+from modules.voice_processor import VoiceProcessor
 import os
+
+
 
 # Set Streamlit page config
 st.set_page_config(
@@ -195,6 +198,38 @@ with st.sidebar:
             st.rerun()
 
     st.divider()
+
+    # In app.py - initialize voice processor
+    if "voice_processor" not in st.session_state:
+        st.session_state.voice_processor = VoiceProcessor()
+
+    # In the sidebar section of app.py, add:
+    if st.session_state.voice_processor.is_available:
+        st.sidebar.divider()
+        st.sidebar.subheader("Voice Options")
+        st.session_state.voice_enabled = st.sidebar.checkbox("Enable voice responses", value=False)
+        if st.session_state.voice_enabled:
+            st.sidebar.info("Voice is enabled. Each response will include audio.")
+    else:
+        # Only show if professor (for setting up the system)
+        if st.session_state.user_role == "professor":
+            st.sidebar.divider()
+            st.sidebar.subheader("Voice Options")
+            st.sidebar.warning("ElevenLabs API key not configured. Set the ELEVENLABS_API_KEY environment variable to enable text-to-speech.")
+
+    # In app.py - add this to the sidebar section
+
+    # Voice settings section (if API key is available)
+    # if st.session_state.voice_processor.is_available:
+    #     st.sidebar.divider()
+    #     st.sidebar.subheader("Voice Settings")
+    #     st.sidebar.write("Text-to-speech is enabled. Click '🔊 Speak' on any message to hear it.")
+    # else:
+    #     # Only show if professor (for setting up the system)
+    #     if st.session_state.user_role == "professor":
+    #         st.sidebar.divider()
+    #         st.sidebar.subheader("Voice Settings")
+    #         st.sidebar.warning("ElevenLabs API key not configured. Set the ELEVENLABS_API_KEY environment variable to enable text-to-speech.")
     
     # User guide based on role
     if st.session_state.user_role == "student":
