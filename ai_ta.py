@@ -1,6 +1,7 @@
 import streamlit as st
 from modules.pdf_processor import process_pdf
 from modules.chat_handler import handle_chat_input
+from modules.document_processor import process_document
 import os
 
 # Set Streamlit page config
@@ -64,7 +65,9 @@ with st.sidebar:
         uploader_text = "Upload course materials, research papers, etc."
     
     # Allow multiple file uploads
-    uploaded_files = st.file_uploader(uploader_text, type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader(
+        uploader_text,
+          type=["pdf","csv","xlsx","xls"], accept_multiple_files=True)
     
     # Show currently processed files
     if st.session_state.processed_files:
@@ -110,37 +113,61 @@ with st.sidebar:
                     # Find file object from the current uploads
                     file_obj = next((f for f in uploaded_files if f.name == file_name), None)
                     
+                    # if file_obj:
+                        # try:
+                        #     # If this is the first document, just process it normally
+                        #     if st.session_state.conversation is None:
+                        #         st.session_state.conversation = process_pdf(file_obj)
+                        #         if st.session_state.conversation:
+                        #             st.session_state.processed_files.add(file_name)
+                        #             st.session_state.processing_status[file_name] = "complete"
+                        #             st.session_state.document_processed = True
+                        #         else:
+                        #             st.session_state.processing_status[file_name] = "failed"
+                        #             all_files_processed = False
+                        #     else:
+                        #         # For subsequent documents, use add_to_existing
+                        #         st.session_state.conversation = process_pdf(
+                        #             file_obj, 
+                        #             add_to_existing=True,
+                        #             existing_conversation=st.session_state.conversation
+                        #         )
+                                
+                        #         if st.session_state.conversation:
+                        #             st.session_state.processed_files.add(file_name)
+                        #             st.session_state.processing_status[file_name] = "complete"
+                        #             st.session_state.document_processed = True
+                        #         else:
+                        #             st.session_state.processing_status[file_name] = "failed"
+                        #             all_files_processed = False
+                        # except Exception as e:
+                        #     st.error(f"Error processing {file_name}: {str(e)}")
+                        #     st.session_state.processing_status[file_name] = "failed"
+                        #     all_files_processed = False
+                    # app.py (simplified processing section)
+
                     if file_obj:
                         try:
-                            # If this is the first document, just process it normally
-                            if st.session_state.conversation is None:
-                                st.session_state.conversation = process_pdf(file_obj)
-                                if st.session_state.conversation:
-                                    st.session_state.processed_files.add(file_name)
-                                    st.session_state.processing_status[file_name] = "complete"
-                                    st.session_state.document_processed = True
-                                else:
-                                    st.session_state.processing_status[file_name] = "failed"
-                                    all_files_processed = False
+                            # Use the unified processor
+                            st.session_state.conversation = process_document(
+                                file_obj,
+                                add_to_existing=(st.session_state.conversation is not None),
+                                existing_conversation=st.session_state.conversation
+                            )
+                            
+                            if st.session_state.conversation:
+                                st.session_state.processed_files.add(file_name)
+                                st.session_state.processing_status[file_name] = "complete"
+                                st.session_state.document_processed = True
                             else:
-                                # For subsequent documents, use add_to_existing
-                                st.session_state.conversation = process_pdf(
-                                    file_obj, 
-                                    add_to_existing=True,
-                                    existing_conversation=st.session_state.conversation
-                                )
-                                
-                                if st.session_state.conversation:
-                                    st.session_state.processed_files.add(file_name)
-                                    st.session_state.processing_status[file_name] = "complete"
-                                    st.session_state.document_processed = True
-                                else:
-                                    st.session_state.processing_status[file_name] = "failed"
-                                    all_files_processed = False
+                                st.session_state.processing_status[file_name] = "failed"
+                                all_files_processed = False
                         except Exception as e:
                             st.error(f"Error processing {file_name}: {str(e)}")
                             st.session_state.processing_status[file_name] = "failed"
                             all_files_processed = False
+
+
             elif status == "failed":
                 st.error(f"Failed to process {file_name}")
                 all_files_processed = False
@@ -208,4 +235,6 @@ else:
         st.info("Upload and process course materials to build a knowledge base for your students and teaching support.")
     
     st.write("👈 Upload PDFs in the sidebar to get started")
+
+
 

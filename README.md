@@ -90,6 +90,8 @@ tara-teaching-assistant/
 ## Future Improvements
 
 - [ ] Support for more file types (DOCX, TXT, etc.)
+- [ ] Add Voice Features
+- [ ] Add Calling features
 - [ ] Persistent storage for knowledge base across restarts
 - [ ] Fine-tuning options for the underlying model
 - [ ] Ability to save and export chat history
